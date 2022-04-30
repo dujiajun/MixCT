@@ -1,0 +1,14 @@
+{
+  "name": "Code",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "common",
+  "devDependencies": {
+    "eslint": "^8.14.0"
+  },
+  "dependencies": {
+    "bn.js": "^5.2.0",
+    "elliptic": "^6.5.4",
+    "web3": "^1.7.3"
+  }
+}
