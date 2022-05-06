@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const BN = require("bn.js");
 const params = require("./params");
 const { representate } = require("./serialize");
-const { curve } = params;
+const { ec } = params;
 
 function toBN10(str) {
   return new BN(str, 10);
@@ -26,18 +26,13 @@ function commitBits(g, h, exp, r) {
 }
 
 function randomExponent() {
-  return new BN(crypto.randomBytes(32), "hex");
+  const keyPair = ec.genKeyPair();
+  return keyPair.getPrivate();
 }
 
 function randomGroupElement() {
-  while (true) {
-    try {
-      const x = new BN(crypto.randomBytes(32), "hex");
-      return curve.pointFromX(x);
-    } catch (error) {
-      continue;
-    }
-  }
+  const keyPair = ec.genKeyPair();
+  return keyPair.getPublic();
 }
 
 function generateChallenge(group_elements) {
