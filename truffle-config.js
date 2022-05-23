@@ -1,10 +1,15 @@
 module.exports = {
   compilers: {
     solc: {
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 200,
+        },
+      },
       version: "^0.8.0",
-      parser: "solcjs"
-    }
-  }
+    },
+  },
   // Uncommenting the defaults below
   // provides for an easier quick-start with Ganache.
   // You can also follow this format for other networks.

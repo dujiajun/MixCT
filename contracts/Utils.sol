@@ -1,125 +1,97 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./EllipticCurve.sol";
+
 library Utils {
-    uint256 constant GROUP_ORDER =
-        0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001;
-    uint256 constant FIELD_ORDER =
-        0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47;
+    uint256 constant PP =
+        0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f;
+    uint256 constant NN =
+        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+    uint256 constant AA = 0x0;
+    uint256 constant BB = 0x7;
 
-    function add(uint256 x, uint256 y) internal pure returns (uint256) {
-        return addmod(x, y, GROUP_ORDER);
-    }
-
-    function mul(uint256 x, uint256 y) internal pure returns (uint256) {
-        return mulmod(x, y, GROUP_ORDER);
-    }
-
-    function inv(uint256 x) internal view returns (uint256) {
-        return exp(x, GROUP_ORDER - 2);
-    }
-
-    function mod(uint256 x) internal pure returns (uint256) {
-        return x % GROUP_ORDER;
-    }
-
-    function sub(uint256 x, uint256 y) internal pure returns (uint256) {
-        return x >= y ? x - y : GROUP_ORDER - y + x;
+    struct G1Point {
+        uint256 x;
+        uint256 y;
     }
 
     function neg(uint256 x) internal pure returns (uint256) {
-        return GROUP_ORDER - x;
+        return PP - x;
     }
 
-    function exp(uint256 base, uint256 exponent)
-        internal
-        view
-        returns (uint256 output)
-    {
-        uint256 order = GROUP_ORDER;
-        assembly {
-            let m := mload(0x40)
-            mstore(m, 0x20)
-            mstore(add(m, 0x20), 0x20)
-            mstore(add(m, 0x40), 0x20)
-            mstore(add(m, 0x60), base)
-            mstore(add(m, 0x80), exponent)
-            mstore(add(m, 0xa0), order)
-            if iszero(staticcall(gas(), 0x05, m, 0xc0, m, 0x20)) {
-                // staticcall or call?
-                revert(0, 0)
-            }
-            output := mload(m)
-        }
+    function g() public pure returns (G1Point memory) {
+        return
+            G1Point(
+                0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
+                0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+            );
     }
 
-    function fieldExp(uint256 base, uint256 exponent)
-        internal
-        view
-        returns (uint256 output)
-    {
-        // warning: mod p, not q
-        uint256 order = FIELD_ORDER;
-        assembly {
-            let m := mload(0x40)
-            mstore(m, 0x20)
-            mstore(add(m, 0x20), 0x20)
-            mstore(add(m, 0x40), 0x20)
-            mstore(add(m, 0x60), base)
-            mstore(add(m, 0x80), exponent)
-            mstore(add(m, 0xa0), order)
-            if iszero(staticcall(gas(), 0x05, m, 0xc0, m, 0x20)) {
-                // staticcall or call?
-                revert(0, 0)
-            }
-            output := mload(m)
-        }
+    function h() public pure returns (G1Point memory) {
+        return
+            G1Point(
+                0xd67dedde7f8861e5a99c0e30e06594997e85da6604ceffd429c69bf9d1d5b4d7,
+                0x77f0f57c3757fc327265bf588cf1ddef2ca35b1445e9374e44ca710301bd9b61
+            );
     }
 
-    struct G1Point {
-        bytes32 x;
-        bytes32 y;
+    function f() public pure returns (G1Point memory) {
+        return
+            G1Point(
+                0xc4abbb41fb87d293ae90fd755c1e62506b7c80d2fe84efa36970383e17ca274a,
+                0xd730074791dbacb3bc866d4600b62d1da3bd1aacc2da289f20424036f10c1c06
+            );
     }
 
     function isInfinity(G1Point memory p) internal pure returns (bool) {
-        return p.x == 0 && p.y == 0;
+        return EllipticCurve.isOnCurve(p.x, p.y, AA, BB, PP);
     }
 
     function add(G1Point memory p1, G1Point memory p2)
         internal
-        view
+        pure
         returns (G1Point memory r)
     {
-        assembly {
-            let m := mload(0x40)
-            mstore(m, mload(p1))
-            mstore(add(m, 0x20), mload(add(p1, 0x20)))
-            mstore(add(m, 0x40), mload(p2))
-            mstore(add(m, 0x60), mload(add(p2, 0x20)))
-            if iszero(staticcall(gas(), 0x06, m, 0x80, r, 0x40)) {
-                revert(0, 0)
-            }
-        }
+        (uint256 x, uint256 y) = EllipticCurve.ecAdd(
+            p1.x,
+            p1.y,
+            p2.x,
+            p2.y,
+            AA,
+            PP
+        );
+        return G1Point(x, y);
+    }
+
+    function sub(G1Point memory p1, G1Point memory p2)
+        internal
+        pure
+        returns (G1Point memory r)
+    {
+        (uint256 x, uint256 y) = EllipticCurve.ecSub(
+            p1.x,
+            p1.y,
+            p2.x,
+            p2.y,
+            AA,
+            PP
+        );
+        return G1Point(x, y);
     }
 
     function mul(G1Point memory p, uint256 s)
         internal
-        view
+        pure
         returns (G1Point memory r)
     {
-        assembly {
-            let m := mload(0x40)
-            mstore(m, mload(p))
-            mstore(add(m, 0x20), mload(add(p, 0x20)))
-            mstore(add(m, 0x40), s)
-            if iszero(staticcall(gas(), 0x07, m, 0x60, r, 0x40)) {
-                revert(0, 0)
-            }
-        }
+        (uint256 x, uint256 y) = EllipticCurve.ecMul(s, p.x, p.y, AA, PP);
+        return G1Point(x, y);
     }
 
     function neg(G1Point memory p) internal pure returns (G1Point memory) {
-        return G1Point(p.x, bytes32(FIELD_ORDER - uint256(p.y))); // p.y should already be reduced mod P?
+        (uint256 x, uint256 y) = EllipticCurve.ecInv(p.x, p.y, PP);
+        return G1Point(x, y);
     }
 
     function eq(G1Point memory p1, G1Point memory p2)
@@ -130,19 +102,7 @@ library Utils {
         return p1.x == p2.x && p1.y == p2.y;
     }
 
-    function zero() internal view returns (G1Point memory) {
-        return mul(G1Point(0, 0), 0);
-    }
-
-    function slice(bytes memory input, uint256 start)
-        internal
-        pure
-        returns (bytes32 result)
-    {
-        assembly {
-            let m := mload(0x40)
-            mstore(m, mload(add(add(input, 0x20), start))) // why only 0x20?
-            result := mload(m)
-        }
+    function zero() internal pure returns (G1Point memory) {
+        return mul(g(), 0);
     }
 }

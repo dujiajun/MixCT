@@ -1,5 +1,5 @@
-const Tumbler = artifacts.require("Tumbler");
+const Migrations = artifacts.require("Migrations")
 
 module.exports = function (deployer) {
-  deployer.deploy(Tumbler);
-};
+  deployer.deploy(Migrations)
+}
