@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./Utils.sol";
 
-
 library Primitives {
-
     using Utils for Utils.G1Point;
     using Utils for uint256;
 
@@ -52,19 +50,13 @@ library Primitives {
         uint256 n,
         uint256 m
     ) internal pure returns (uint256[] memory) {
-        uint256[] memory out;
+        uint256[] memory out = new uint256[](m);
         uint256 j = 0;
         while (num != 0) {
             uint256 rem = num % n;
             num = num / n;
             out[j] = rem;
             j++;
-        }
-        //if (out.length > m) out.length = m;
-        if (out.length < m) {
-            for (uint256 index = out.length; index < m; index++) {
-                out[index] = 0;
-            }
         }
         return out;
     }

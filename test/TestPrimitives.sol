@@ -13,7 +13,7 @@ contract TestPrimitives {
         Assert.isTrue(1 + 1 == 2, "basic test");
     }
 
-    function testAdd() public{
+    function testAdd() public {
         Utils.G1Point memory t1 = Utils.G1Point(
             0x802966a5cadde5ad952bcfdf1769615ce01997a3514e9e29ac6d50c63ef9c429,
             0xba74f961f54a3d3f49561882742b48746a94f99c2b64fff2ee607a703e6d7ec2
@@ -55,5 +55,14 @@ contract TestPrimitives {
         Utils.G1Point memory c = Primitives.commit(g, x, h, r);
 
         Assert.isTrue(c.eq(expected), "commitment is ok");
+    }
+
+    function testConvertToNal() public {
+        uint256 n = 4;
+        uint256 m = 2;
+        for (uint256 index = 0; index < n ** m; index++) {
+            uint256[] memory I = Primitives.convertToNal(index, n, m);
+            Assert.equal(I[0] + I[1] * n, index, "convertToNal OK");
+        }
     }
 }
