@@ -39,6 +39,8 @@ contract Tumbler {
         return true;
     }
 
+    event Burn(bool);
+
     function burn(uint256 value, uint256 randomness) public {
         Utils.G1Point memory c = Primitives.commit(
             Utils.g(),
@@ -47,7 +49,10 @@ contract Tumbler {
             randomness
         );
         if (acc[msg.sender].eq(c)) {
-            acc[msg.sender] = Primitives.commit(Utils.g(), 0, Utils.h(), 0);
+            emit Burn(true);
+            acc[msg.sender] = Utils.zero();
+        } else {
+            emit Burn(false);
         }
     }
 

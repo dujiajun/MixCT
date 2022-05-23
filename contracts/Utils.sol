@@ -113,6 +113,6 @@ library Utils {
     }
 
     function zero() internal pure returns (G1Point memory) {
-        return mul(g(), 0);
+        return G1Point(0, 0);
     }
 }
