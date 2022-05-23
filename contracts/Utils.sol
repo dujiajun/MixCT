@@ -12,8 +12,8 @@ library Utils {
     uint256 constant BB = 0x7;
 
     struct G1Point {
-        uint256 x;
-        uint256 y;
+        bytes32 x;
+        bytes32 y;
     }
 
     function neg(uint256 x) internal pure returns (uint256) {
@@ -45,7 +45,7 @@ library Utils {
     }
 
     function isInfinity(G1Point memory p) internal pure returns (bool) {
-        return EllipticCurve.isOnCurve(p.x, p.y, AA, BB, PP);
+        return EllipticCurve.isOnCurve(uint256(p.x), uint256(p.y), AA, BB, PP);
     }
 
     function add(G1Point memory p1, G1Point memory p2)
@@ -54,14 +54,14 @@ library Utils {
         returns (G1Point memory r)
     {
         (uint256 x, uint256 y) = EllipticCurve.ecAdd(
-            p1.x,
-            p1.y,
-            p2.x,
-            p2.y,
+            uint256(p1.x),
+            uint256(p1.y),
+            uint256(p2.x),
+            uint256(p2.y),
             AA,
             PP
         );
-        return G1Point(x, y);
+        return G1Point(bytes32(x), bytes32(y));
     }
 
     function sub(G1Point memory p1, G1Point memory p2)
@@ -70,14 +70,14 @@ library Utils {
         returns (G1Point memory r)
     {
         (uint256 x, uint256 y) = EllipticCurve.ecSub(
-            p1.x,
-            p1.y,
-            p2.x,
-            p2.y,
+            uint256(p1.x),
+            uint256(p1.y),
+            uint256(p2.x),
+            uint256(p2.y),
             AA,
             PP
         );
-        return G1Point(x, y);
+        return G1Point(bytes32(x), bytes32(y));
     }
 
     function mul(G1Point memory p, uint256 s)
@@ -85,13 +85,23 @@ library Utils {
         pure
         returns (G1Point memory r)
     {
-        (uint256 x, uint256 y) = EllipticCurve.ecMul(s, p.x, p.y, AA, PP);
-        return G1Point(x, y);
+        (uint256 x, uint256 y) = EllipticCurve.ecMul(
+            s,
+            uint256(p.x),
+            uint256(p.y),
+            AA,
+            PP
+        );
+        return G1Point(bytes32(x), bytes32(y));
     }
 
     function neg(G1Point memory p) internal pure returns (G1Point memory) {
-        (uint256 x, uint256 y) = EllipticCurve.ecInv(p.x, p.y, PP);
-        return G1Point(x, y);
+        (uint256 x, uint256 y) = EllipticCurve.ecInv(
+            uint256(p.x),
+            uint256(p.y),
+            PP
+        );
+        return G1Point(bytes32(x), bytes32(y));
     }
 
     function eq(G1Point memory p1, G1Point memory p2)

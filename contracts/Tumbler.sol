@@ -15,8 +15,6 @@ contract Tumbler {
 
     EscrowStatement[] pool;
 
-    constructor() {}
-
     function escrow(Utils.G1Point memory cesc, Utils.G1Point memory token)
         public
     {

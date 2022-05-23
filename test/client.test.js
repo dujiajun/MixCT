@@ -5,13 +5,17 @@ const { serialize } = require("../src/serialize");
 const Tumbler = artifacts.require("Tumbler");
 
 contract("Tumbler", async (accounts) => {
+  let tumbler;
+
+  before(async () => {
+    tumbler = await Tumbler.new();
+  });
+
   it("should print account", async () => {
-    //const tumbler = await Tumbler.deployed();
     console.log(accounts);
   });
 
   it("should print empty balance", async () => {
-    const tumbler = await Tumbler.deployed();
     const account = accounts[0];
     //var alice = new Client(web3, tumbler, accounts[0]);
     const balance = await tumbler.getAcc(account);
@@ -27,8 +31,6 @@ contract("Tumbler", async (accounts) => {
   });
 
   it("should add balance", async () => {
-    const tumbler = await Tumbler.deployed();
-
     const r = randomExponent();
     const c = commit(g, 100, h, r);
     const tmp = serialize(c);
