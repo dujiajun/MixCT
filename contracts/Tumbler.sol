@@ -20,9 +20,11 @@ contract Tumbler {
     }
 
     struct RedeemStatement {
-        Utils.G1Point cesc;
+        Utils.G1Point cred;
         Verifier.SigmaProof proof;
     }
+
+    RedeemStatement[] red_pool;
 
     function escrow(Utils.G1Point memory cesc, Utils.G1Point memory token)
         public
@@ -34,10 +36,28 @@ contract Tumbler {
         acc[msg.sender] = acc[msg.sender].sub(cesc);
     }
 
-    function redeem(Utils.G1Point memory cred, Utils.G1Point memory proof)
-        public
-    {
-        //Utils.G1Point[] memory clist = new Utils.G1Point[];
+    event Redeem(bool);
+
+    function redeem(
+        Utils.G1Point memory cred,
+        Verifier.SigmaProof memory proof,
+        Verifier.SigmaAuxiliaries memory aux
+    ) public {
+        Utils.G1Point[] memory clist = new Utils.G1Point[](esc_pool.length);
+        for (uint256 i = 0; i < esc_pool.length; i++) {
+            clist[i] = cred.sub(esc_pool[i].cesc.add(esc_pool[i].token));
+        }
+
+        if (Verifier.verifySigmaProof(clist, proof, aux)) {
+            RedeemStatement memory statement;
+            statement.cred = cred;
+            statement.proof = proof;
+            red_pool.push(statement);
+            acc[msg.sender] = acc[msg.sender].add(cred);
+            emit Redeem(true);
+            return;
+        }
+        emit Redeem(false);
     }
 
     event Fund(Utils.G1Point);
@@ -50,7 +70,7 @@ contract Tumbler {
 
     event Burn(bool);
 
-    function burn(uint256 value, uint256 randomness) public {
+    function burn(uint256 value, uint256 randomness) public returns (bool) {
         Utils.G1Point memory c = Primitives.commit(
             Utils.g(),
             value,
@@ -60,8 +80,10 @@ contract Tumbler {
         if (acc[msg.sender].eq(c)) {
             emit Burn(true);
             acc[msg.sender] = Utils.zero();
+            return true;
         } else {
             emit Burn(false);
+            return false;
         }
     }
 

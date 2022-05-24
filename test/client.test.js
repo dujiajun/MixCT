@@ -56,6 +56,8 @@ contract("Tumbler", async (accounts) => {
     assert.equal(pool.length, 1);
     assert.equal(pool[0].cesc.x, serialize(c)[0]);
     assert.equal(pool[0].token.y, serialize(token)[1]);
+    const balance = await tumbler.getAcc(accounts[0]);
+    console.log("balance", balance);
   });
 
   it("should remove balance", async () => {
