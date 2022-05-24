@@ -13,7 +13,16 @@ contract Tumbler {
         Utils.G1Point token;
     }
 
-    EscrowStatement[] pool;
+    EscrowStatement[] esc_pool;
+
+    function queryPool() public view returns (EscrowStatement[] memory) {
+        return esc_pool;
+    }
+
+    struct RedeemStatement {
+        Utils.G1Point cesc;
+        Verifier.SigmaProof proof;
+    }
 
     function escrow(Utils.G1Point memory cesc, Utils.G1Point memory token)
         public
@@ -21,7 +30,7 @@ contract Tumbler {
         EscrowStatement memory statement;
         statement.cesc = cesc;
         statement.token = token;
-        pool.push(statement);
+        esc_pool.push(statement);
         acc[msg.sender] = acc[msg.sender].sub(cesc);
     }
 

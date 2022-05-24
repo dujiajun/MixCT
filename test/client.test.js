@@ -9,7 +9,7 @@ contract("Tumbler", async (accounts) => {
   let tumbler;
 
   before(async () => {
-    tumbler = await Tumbler.new();
+    tumbler = await Tumbler.deployed();
   });
 
   it("should print account", async () => {
@@ -33,9 +33,11 @@ contract("Tumbler", async (accounts) => {
 
   const r = randomExponent();
   const v = new BN(100);
+  const c = commit(g, v, h, r);
+
+  const trapdoor = randomExponent();
 
   it("should add balance", async () => {
-    const c = commit(g, v, h, r);
     const tmp = serialize(c);
     //console.log(tmp);
     await tumbler.fund(tmp, { from: accounts[0] });
@@ -44,6 +46,16 @@ contract("Tumbler", async (accounts) => {
     console.log("balance", balance);
     assert.equal(balance.x, tmp[0]);
     assert.equal(balance.y, tmp[1]);
+  });
+
+  it("should escrow", async () => {
+    const token = f.mul(trapdoor);
+    await tumbler.escrow(serialize(c), serialize(token), { from: accounts[0] });
+    const pool = await tumbler.queryPool();
+    console.log("pool", pool);
+    assert.equal(pool.length, 1);
+    assert.equal(pool[0].cesc.x, serialize(c)[0]);
+    assert.equal(pool[0].token.y, serialize(token)[1]);
   });
 
   it("should remove balance", async () => {
