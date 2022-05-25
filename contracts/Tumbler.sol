@@ -59,11 +59,11 @@ contract Tumbler {
         emit Redeem(false);
     }
 
-    event Fund(Utils.G1Point);
+    event Fund(address);
 
     function fund(Utils.G1Point memory c_init) public returns (bool) {
         acc[msg.sender] = acc[msg.sender].add(c_init);
-        emit Fund(acc[msg.sender]);
+        emit Fund(msg.sender);
         return true;
     }
 
