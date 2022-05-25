@@ -21,7 +21,7 @@ contract Tumbler {
 
     struct RedeemStatement {
         Utils.G1Point cred;
-        Verifier.SigmaProof proof;
+        //Verifier.SigmaProof proof;
     }
 
     RedeemStatement[] red_pool;
@@ -47,11 +47,10 @@ contract Tumbler {
         for (uint256 i = 0; i < esc_pool.length; i++) {
             clist[i] = cred.sub(esc_pool[i].cesc.add(esc_pool[i].token));
         }
-
         if (Verifier.verifySigmaProof(clist, proof, aux)) {
             RedeemStatement memory statement;
             statement.cred = cred;
-            statement.proof = proof;
+            //statement.proof = proof;
             red_pool.push(statement);
             acc[msg.sender] = acc[msg.sender].add(cred);
             emit Redeem(true);

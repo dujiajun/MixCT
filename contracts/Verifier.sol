@@ -106,49 +106,57 @@ library Verifier {
         SigmaProof memory proof,
         SigmaAuxiliaries memory aux
     ) internal pure returns (bool) {
-        R1Auxiliaries memory r1aux = R1Auxiliaries(
-            aux.n,
-            aux.m,
-            proof.B,
-            aux.g,
-            aux.h
-        );
-        if (!verifyR1Proof(proof.r1Proof, r1aux, true)) return false;
-
-        Utils.G1Point[] memory group_elements;
-        group_elements[0] = proof.r1Proof.A;
-        group_elements[1] = proof.B;
-        group_elements[2] = proof.r1Proof.C;
-        group_elements[3] = proof.r1Proof.D;
-
-        for (uint256 i = 0; i < proof.Gk.length; i++) {
-            group_elements[group_elements.length] = proof.Gk[i];
-        }
-
-        uint256 challenge_x = Primitives.generateChallenge(group_elements);
+        uint256 challenge_x;
         uint256[] memory f;
-        if (!verifyR1Final(proof.r1Proof, r1aux, challenge_x, f)) return false;
+        {
+            R1Auxiliaries memory r1aux;
+            r1aux.n = aux.n;
+            r1aux.m = aux.m;
+            r1aux.B_commit = proof.B;
+            r1aux.g = aux.g;
+            r1aux.h = aux.h;
 
+            if (!verifyR1Proof(proof.r1Proof, r1aux, true)) return false;
+
+            Utils.G1Point[] memory group_elements;
+            group_elements[0] = proof.r1Proof.A;
+            group_elements[1] = proof.B;
+            group_elements[2] = proof.r1Proof.C;
+            group_elements[3] = proof.r1Proof.D;
+
+            for (uint256 i = 0; i < proof.Gk.length; i++) {
+                group_elements[group_elements.length] = proof.Gk[i];
+            }
+
+            challenge_x = Primitives.generateChallenge(group_elements);
+
+            if (!verifyR1Final(proof.r1Proof, r1aux, challenge_x, f))
+                return false;
+        }
         uint256 N = commits.length;
         uint256[] memory f_i_;
-        for (uint256 i = 0; i < N; i++) {
-            uint256[] memory I = Primitives.convertToNal(i, aux.n, aux.m);
-            uint256 f_i = 1;
-            for (uint256 j = 0; j < aux.m; j++) {
-                f_i = f_i * f[j * aux.n + I[j]];
+        {
+            for (uint256 i = 0; i < N; i++) {
+                uint256[] memory I = Primitives.convertToNal(i, aux.n, aux.m);
+                uint256 f_i = 1;
+                for (uint256 j = 0; j < aux.m; j++) {
+                    f_i = f_i * f[j * aux.n + I[j]];
+                }
+                f_i_[i] = f_i;
             }
-            f_i_[i] = f_i;
         }
 
-        Utils.G1Point memory t1 = Primitives.multiExp(commits, f_i_);
-        Utils.G1Point memory t2 = Utils.zero();
-        uint256 x_k = 1;
-        for (uint256 k = 0; k < aux.m; k++) {
-            t2 = t2.add(proof.Gk[k].mul(x_k.neg()));
-            x_k = x_k * challenge_x;
+        Utils.G1Point memory left;
+        {
+            Utils.G1Point memory t1 = Primitives.multiExp(commits, f_i_);
+            Utils.G1Point memory t2 = Utils.zero();
+            uint256 x_k = 1;
+            for (uint256 k = 0; k < aux.m; k++) {
+                t2 = t2.add(proof.Gk[k].mul(x_k.neg()));
+                x_k = x_k * challenge_x;
+            }
+            left = t1.add(t2);
         }
-
-        Utils.G1Point memory left = t1.add(t2);
         if (!left.eq(Primitives.commit(aux.g, 0, aux.h[0], proof.z)))
             return false;
         return true;
