@@ -7,7 +7,7 @@ module.exports = {
           runs: 200,
         },
       },
-      version: "^0.8.0",
+      version: "0.8.13",
     },
   },
   // Uncommenting the defaults below
