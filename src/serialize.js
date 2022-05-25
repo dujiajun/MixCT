@@ -41,6 +41,7 @@ function serializeSigmaProof(proof) {
   result.push(serializeR1Proof(proof.r1Proof));
   result.push(proof.Gk.map((item) => serialize(item)));
   result.push(toBytes(proof.z));
+  return result;
 }
 
 function serializeAux(aux) {

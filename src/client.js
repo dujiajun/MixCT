@@ -133,7 +133,12 @@ class Client {
 
     const trapdoor = this.trapdoors[l];
     const { proof, aux } = this._generateProof(pool, c_esc, c_red, trapdoor);
-
+    console.log(
+      "Redeem",
+      serialize(c_red),
+      serializeSigmaProof(proof),
+      serializeAux(aux)
+    );
     const result = await this.contract.redeem(
       serialize(c_red),
       serializeSigmaProof(proof),

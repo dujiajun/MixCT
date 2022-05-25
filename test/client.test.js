@@ -21,7 +21,6 @@ contract("Tumbler", async (accounts) => {
 
   it("should print empty balance", async () => {
     const balance = await alice.getBalance();
-    console.log("zero", serialize(zero));
     assert.isTrue(balance.eq(zero));
   });
 
@@ -31,7 +30,6 @@ contract("Tumbler", async (accounts) => {
     }
     const balance = await alice.getBalance();
     const local = alice.getLocalBalance();
-    console.log("should add balance", serialize(balance), serialize(local));
     assert.isTrue(local.eq(balance));
   });
 
