@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "license": "MIT",
   "type": "common",
+  "scripts": {
+    "server": "ganache --miner.defaultGasPrice 0 --miner.blockGasLimit 30000000000 --miner.callGasLimit 30000000000"
+  },
   "devDependencies": {
-    "eslint": "^8.14.0"
+    "eslint": "^8.14.0",
+    "eth-gas-reporter": "^0.2.25"
   },
   "dependencies": {
     "bn.js": "^5.2.0",

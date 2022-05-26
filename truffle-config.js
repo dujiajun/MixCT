@@ -1,4 +1,7 @@
 module.exports = {
+  mocha: {
+    reporter: "eth-gas-reporter",
+  },
   compilers: {
     solc: {
       settings: {
@@ -10,6 +13,19 @@ module.exports = {
       version: "0.8.13",
     },
   },
+  networks: {
+    development: {
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "*",
+    },
+    test: {
+      host: "127.0.0.1",
+      port: 8545,
+      network_id: "*",
+    },
+  },
+  //},
   // Uncommenting the defaults below
   // provides for an easier quick-start with Ganache.
   // You can also follow this format for other networks.
