@@ -156,7 +156,6 @@ library Verifier {
                 return false;
         }
         emit Progress(6);
-        Utils.G1Point memory left;
         uint256[] memory f_i_ = new uint256[](N);
         {
             for (uint256 i = 0; i < N; i++) {
@@ -168,7 +167,9 @@ library Verifier {
                 f_i_[i] = f_i;
             }
         }
+
         emit Progress(7);
+        Utils.G1Point memory left;
         {
             Utils.G1Point memory t1 = Primitives.multiExp(commits, f_i_);
             Utils.G1Point memory t2 = Utils.zero();
@@ -177,12 +178,19 @@ library Verifier {
                 t2 = t2.add(proof.Gk[k].mul(x_k.neg()));
                 x_k = x_k.mul(challenge_x);
             }
+            emit PrintPoint(t2);
             left = t1.add(t2);
         }
-
+        emit PrintPoint(left);
         emit Progress(8);
-        if (!left.eq(Primitives.commit(aux.g, 0, aux.h[0], proof.z)))
-            return false;
+        Utils.G1Point memory cmp = Primitives.commit(
+            aux.g,
+            0,
+            aux.h[0],
+            proof.z
+        );
+        emit PrintPoint(cmp);
+        if (!left.eq(cmp)) return false;
 
         return true;
         return false;

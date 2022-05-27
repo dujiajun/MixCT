@@ -67,22 +67,13 @@ class R1Verifier {
     if (!one.eq(this.B_commit.mul(challenge_x).add(proof.A))) {
       return false;
     }
-    /*console.log(
-      serialize(one),
-      serialize(this.B_commit),
-      serialize(this.B_commit.mul(challenge_x)),
-      challenge_x.toString(10),
-      serialize(proof.A)
-    );*/
+
     const f_outprime = new Array(f_out.length);
     for (let i = 0; i < f_out.length; i++) {
       const exp = challenge_x.sub(f_out[i]).add(curve.n).mod(curve.n);
       f_outprime[i] = f_out[i].mul(exp).mod(curve.n);
     }
-    console.log(
-      "before R1 verify two",
-      f_outprime.map((item) => item.toString(10))
-    );
+
     const two = commitBits(this.g, this.h, f_outprime, proof.ZC);
     if (!two.eq(proof.C.mul(challenge_x).add(proof.D))) {
       return false;
@@ -133,19 +124,20 @@ class SigmaVerifier {
       const I = convertToNal(i, this.n, this.m);
       let f_i = new BN(1);
       for (let j = 0; j < this.m; j++) {
-        f_i = f_i.mul(f[j * this.n + I[j]]);
+        f_i = f_i.mul(f[j * this.n + I[j]]).mod(curve.n);
       }
       f_i_[i] = f_i;
     }
 
     const t1 = multiExponents(commits, f_i_);
+
     let t2 = zero;
     let x_k = new BN(1);
     for (let k = 0; k < this.m; k++) {
       t2 = t2.add(Gk[k].mul(x_k.neg()));
       x_k = x_k.mul(challenge_x);
     }
-
+    console.log(serialize(t2));
     const left = t1.add(t2);
     if (!left.eq(commit(this.g, new BN(0), this.h[0], proof.z))) {
       return false;

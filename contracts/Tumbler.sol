@@ -48,15 +48,15 @@ contract Tumbler {
         Verifier.SigmaProof memory proof,
         Verifier.SigmaAuxiliaries memory aux
     ) public returns (bool) {
-        emit RedeemProof(proof);
-        emit RedeemAux(aux);
-        emit RedeemPoint(cred);
-        emit RedeemProgress(esc_pool.length);
+        //emit RedeemProof(proof);
+        //emit RedeemAux(aux);
+        //emit RedeemPoint(cred);
+        //emit RedeemProgress(esc_pool.length);
         Utils.G1Point[] memory clist = new Utils.G1Point[](esc_pool.length);
         for (uint256 i = 0; i < esc_pool.length; i++) {
             clist[i] = cred.sub(esc_pool[i].cesc.add(esc_pool[i].token));
         }
-        emit RedeemPoints(clist);
+        //emit RedeemPoints(clist);
 
         emit RedeemProgress(1);
         if (Verifier.verifySigmaProof(clist, proof, aux)) {
