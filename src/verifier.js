@@ -57,7 +57,6 @@ class R1Verifier {
       for (let i = 0; i < k; i++) {
         tmp = tmp.add(f[j * k + i]);
         f_out.push(f[j * k + i]);
-        console.log(tmp.toString(10), f_out.toString(10));
       }
       f_out[j * this.n] = challenge_x.sub(tmp).add(curve.n).mod(curve.n);
     }
@@ -137,9 +136,25 @@ class SigmaVerifier {
       t2 = t2.add(Gk[k].mul(x_k.neg()));
       x_k = x_k.mul(challenge_x);
     }
-    console.log(serialize(t2));
+
     const left = t1.add(t2);
-    if (!left.eq(commit(this.g, new BN(0), this.h[0], proof.z))) {
+    const cmp = commit(this.g, new BN(0), this.h[0], proof.z);
+    console.log(
+      "t2\n",
+      serialize(t2),
+      "left\n",
+      serialize(left),
+      "g\n",
+      serialize(this.g),
+      "h0\n",
+      serialize(this.h[0]),
+      "z\n",
+      proof.z.toString(10),
+      "cmp\n",
+      serialize(cmp)
+    );
+
+    if (!left.eq(cmp)) {
       return false;
     }
     return true;

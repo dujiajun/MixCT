@@ -1,6 +1,10 @@
 module.exports = {
   mocha: {
     reporter: "eth-gas-reporter",
+    reporterOptions: {
+      currency: "USD",
+      excludeContracts: ["Migrations"],
+    },
   },
   compilers: {
     solc: {

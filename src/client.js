@@ -1,4 +1,4 @@
-const { f, h, g } = require("./params");
+const { f, h, g, zero } = require("./params");
 const { randomExponent, randomGroupElement, commit } = require("./primitives");
 const {
   serialize,
@@ -8,10 +8,13 @@ const {
   toBytes,
 } = require("./serialize");
 const { SigmaProver } = require("./prover");
-const { SigmaVerifier } = require("./verifier");
 const BN = require("bn.js");
 
 class Client {
+  static get zero() {
+    return zero;
+  }
+
   constructor(web3, contract, account) {
     this.web3 = web3;
     this.contract = contract;
@@ -124,30 +127,9 @@ class Client {
     const c_red = c_esc.add(c_mask);
 
     const pool = await this.readPool();
-    //console.log(pool);
+
     const trapdoor = this.trapdoors[l];
     const { proof, aux } = this._generateProof(pool, c_esc, c_red, trapdoor);
-
-    //console.log("proof ", proof, serializeSigmaProof(proof));
-    //console.log("aux ", aux, serializeAux(aux));
-    /*console.log(
-      "Redeem",
-      serialize(c_red),
-      serializeSigmaProof(proof),
-      serializeAux(aux)
-    );*/
-    const c_list = pool.map((item) => {
-      const c_i = deserialize(item.cesc);
-      console.log(item);
-      const token = deserialize(item.token);
-      return c_red.add(c_i.add(token).neg());
-    });
-    console.log(
-      "c_list",
-      c_list.map((item) => serialize(item))
-    );
-    const verifier = new SigmaVerifier(aux.g, aux.h_gens, aux.n, aux.m);
-    console.log("verify result", verifier.verify(c_list, proof));
 
     const result = await this.contract.redeem(
       serialize(c_red),
@@ -158,11 +140,12 @@ class Client {
       }
     );
 
-    if (result) {
+    const event_result = result.logs[0].args[0];
+    if (event_result) {
       this.value = this.value.add(this.vs[l]);
       this.randomness = this.randomness.add(this.rs[l]);
     }
-    return result;
+    return event_result;
   }
 }
 

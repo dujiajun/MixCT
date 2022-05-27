@@ -57,6 +57,49 @@ contract TestPrimitives {
         Assert.isTrue(c.eq(expected), "commitment is ok");
     }
 
+    function testCommitZero() public {
+        Utils.G1Point memory g = Utils.g();
+        Utils.G1Point memory h = Utils.h();
+
+        uint256 x = 0;
+        uint256 r = 10;
+
+        Utils.G1Point memory expected = Utils.G1Point(
+            0x8100a9faa9f51e69a58ff82fa73378f1753b828a9cbd2a96fc05d844b1acf06e,
+            0x87fc78dcc5ba59dc92188887fa0ce3b8a13df5bfdd1e823bd393560e4ad18f4a
+        );
+        Utils.G1Point memory c = Primitives.commit(g, x, h, r);
+
+        Assert.isTrue(c.eq(expected), "commit zero is ok");
+    }
+
+    function testSubToZero() public {
+        Utils.G1Point memory g = Utils.g();
+        Utils.G1Point memory h = Utils.h();
+
+        Utils.G1Point memory c = Primitives.commit(g, 1, h, 1);
+        Utils.G1Point memory expected = Utils.G1Point(0, 0);
+        Assert.isTrue(expected.eq(c.sub(c)), "commit sub to zero is ok");
+    }
+
+    function testHomomorphic() public {
+        Utils.G1Point memory g = Utils.g();
+        Utils.G1Point memory h = Utils.h();
+
+        uint256 x1 = 1;
+        uint256 r1 = 1;
+
+        uint256 x2 = 2;
+        uint256 r2 = 2;
+
+        Utils.G1Point memory c1 = Primitives.commit(g, x1, h, r1);
+        Utils.G1Point memory c2 = Primitives.commit(g, x2, h, r2);
+        Utils.G1Point memory c3 = Primitives.commit(g, x1 + x2, h, r1 + r2);
+        Utils.G1Point memory c4 = c1.add(c2);
+
+        Assert.isTrue(c4.eq(c3), "Homomorphic is ok");
+    }
+
     function testMultiExp() public {
         Utils.G1Point[] memory gs = new Utils.G1Point[](2);
 

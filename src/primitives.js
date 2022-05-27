@@ -53,7 +53,7 @@ function generateChallenge(group_elements) {
   const sha256 = crypto.createHash("sha256");
   sha256.update(Buffer.from(encoded.slice(2), "hex"));
   const hash_out = sha256.digest("hex");
-  const result_out = new BN(hash_out, "hex").toRed(params.p);
+  const result_out = new BN(hash_out, "hex");
   return result_out;
 }
 

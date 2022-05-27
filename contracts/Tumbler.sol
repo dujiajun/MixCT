@@ -36,53 +36,36 @@ contract Tumbler {
         acc[msg.sender] = acc[msg.sender].sub(cesc);
     }
 
-    event Redeem(bool);
-    event RedeemPoint(Utils.G1Point);
-    event RedeemProgress(uint256);
-    event RedeemPoints(Utils.G1Point[]);
-    event RedeemProof(Verifier.SigmaProof);
-    event RedeemAux(Verifier.SigmaAuxiliaries);
+    event RedeemResult(bool);
 
     function redeem(
         Utils.G1Point memory cred,
         Verifier.SigmaProof memory proof,
         Verifier.SigmaAuxiliaries memory aux
-    ) public returns (bool) {
-        //emit RedeemProof(proof);
-        //emit RedeemAux(aux);
-        //emit RedeemPoint(cred);
-        //emit RedeemProgress(esc_pool.length);
+    ) public {
         Utils.G1Point[] memory clist = new Utils.G1Point[](esc_pool.length);
         for (uint256 i = 0; i < esc_pool.length; i++) {
             clist[i] = cred.sub(esc_pool[i].cesc.add(esc_pool[i].token));
         }
-        //emit RedeemPoints(clist);
 
-        emit RedeemProgress(1);
         if (Verifier.verifySigmaProof(clist, proof, aux)) {
             RedeemStatement memory statement;
             statement.cred = cred;
-            //statement.proof = proof;
             red_pool.push(statement);
             acc[msg.sender] = acc[msg.sender].add(cred);
-            emit Redeem(true);
-            return true;
+            emit RedeemResult(true);
+        } else {
+            emit RedeemResult(false);
         }
-        emit Redeem(false);
-        return false;
     }
 
-    event Fund(address);
-
-    function fund(Utils.G1Point memory c_init) public returns (bool) {
+    function fund(Utils.G1Point memory c_init) public {
         acc[msg.sender] = acc[msg.sender].add(c_init);
-        emit Fund(msg.sender);
-        return true;
     }
 
-    event Burn(bool);
+    event BurnResult(bool);
 
-    function burn(uint256 value, uint256 randomness) public returns (bool) {
+    function burn(uint256 value, uint256 randomness) public {
         Utils.G1Point memory c = Primitives.commit(
             Utils.g(),
             value,
@@ -90,12 +73,10 @@ contract Tumbler {
             randomness
         );
         if (acc[msg.sender].eq(c)) {
-            emit Burn(true);
-            acc[msg.sender] = Utils.zero();
-            return true;
+            acc[msg.sender] = acc[msg.sender].sub(c);
+            emit BurnResult(true);
         } else {
-            emit Burn(false);
-            return false;
+            emit BurnResult(false);
         }
     }
 

@@ -1,10 +1,12 @@
-const { zero } = require("../src/params");
 const Client = require("../src/client");
 const Tumbler = artifacts.require("Tumbler");
 
 contract("Tumbler", async (accounts) => {
   let clients;
   let alice;
+  const N = 4;
+  const INIT_BALANCE = 1000;
+  const MIX_VALUE = 10;
 
   it("should deployed", async () => {
     const tumbler = await Tumbler.deployed();
@@ -22,23 +24,21 @@ contract("Tumbler", async (accounts) => {
 
   it("should print empty balance", async () => {
     const balance = await alice.getBalance();
-    assert.isTrue(balance.eq(zero));
+    assert.isTrue(balance.eq(Client.zero));
   });
 
   it("should add balance", async () => {
     for (let index = 0; index < clients.length; index++) {
-      await clients[index].fund(100);
+      await clients[index].fund(INIT_BALANCE);
     }
     const balance = await alice.getBalance();
     const local = alice.getLocalBalance();
     assert.isTrue(local.eq(balance));
   });
 
-  const N = 4;
-
   it("should escrow", async () => {
     for (let index = 0; index < N; index++) {
-      await clients[index].escrow(100);
+      await clients[index % clients.length].escrow(MIX_VALUE);
     }
 
     const balance = await alice.getBalance();
@@ -49,11 +49,5 @@ contract("Tumbler", async (accounts) => {
   it("should redeem", async () => {
     const result = await alice.redeem(0);
     assert.isTrue(result);
-  });
-
-  it("should remove balance", async () => {
-    await alice.burn();
-    const balance = await alice.getBalance();
-    assert.isTrue(balance.eq(zero));
   });
 });

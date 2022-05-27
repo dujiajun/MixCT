@@ -139,6 +139,7 @@ library Utils {
         return p1.x == p2.x && p1.y == p2.y;
     }
 
+    // not a point on curve. but it can be homomorphicly added
     function zero() internal pure returns (G1Point memory) {
         return G1Point(0, 0);
     }

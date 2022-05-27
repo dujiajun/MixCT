@@ -10,6 +10,7 @@ const {
 } = require("./primitives");
 const BN = require("bn.js");
 const { SigmaProof } = require("./types");
+const { curve } = require("./params");
 
 class R1Prover {
   constructor(g, h, b, r, n, m) {
@@ -138,14 +139,14 @@ class SigmaProver {
 
     const x = generateChallenge(group_elements);
     r1prover.generateFinalResponse(a, x, proof_out.r1Proof);
-    let z = r.mul(x.pow(new BN(this.m)));
+    let z = r.mul(x.pow(new BN(this.m)).mod(curve.n)).mod(curve.n);
     let sum = new BN(0),
       x_k = new BN(1);
     for (let k = 0; k < this.m; k++) {
-      sum = sum.add(Pk[k].mul(x_k));
-      x_k = x_k.mul(x);
+      sum = sum.add(Pk[k].mul(x_k).mod(curve.n)).mod(curve.n);
+      x_k = x_k.mul(x).mod(curve.n);
     }
-    z = z.sub(sum);
+    z = z.sub(sum).mod(curve.n);
     proof_out.z = z;
     return proof_out;
   }

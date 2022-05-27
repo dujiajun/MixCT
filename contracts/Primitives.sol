@@ -13,6 +13,8 @@ library Primitives {
         Utils.G1Point memory h,
         uint256 r
     ) internal pure returns (Utils.G1Point memory) {
+        if (v == 0) return h.mul(r);
+        if (r == 0) return g.mul(v);
         return g.mul(v).add(h.mul(r));
     }
 
