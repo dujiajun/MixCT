@@ -1,5 +1,5 @@
 const BN = require("bn.js");
-const { zero } = require("./params");
+const { zero, p, q, curve } = require("./params");
 const {
   commit,
   commitBits,
@@ -7,6 +7,7 @@ const {
   generateChallenge,
   multiExponents,
 } = require("./primitives");
+const { serialize, toBytes } = require("./serialize");
 
 class R1Verifier {
   constructor(g, h, B, n, m) {
@@ -44,7 +45,6 @@ class R1Verifier {
 
   verify_final_response(proof, challenge_x, f_out) {
     const f = proof.f;
-    console.log("before R1 verify f");
     for (let j = 0; j < f.length; ++j) {
       if (f[j].eq(challenge_x)) return false;
     }
@@ -57,21 +57,32 @@ class R1Verifier {
       for (let i = 0; i < k; i++) {
         tmp = tmp.add(f[j * k + i]);
         f_out.push(f[j * k + i]);
+        console.log(tmp.toString(10), f_out.toString(10));
       }
-      f_out[j * this.n] = challenge_x.sub(tmp);
+      f_out[j * this.n] = challenge_x.sub(tmp).add(curve.n).mod(curve.n);
     }
-    console.log("before R1 verify one");
+
     const one = commitBits(this.g, this.h, f_out, proof.ZA);
 
     if (!one.eq(this.B_commit.mul(challenge_x).add(proof.A))) {
       return false;
     }
-
-    const f_outprime = new Array();
+    /*console.log(
+      serialize(one),
+      serialize(this.B_commit),
+      serialize(this.B_commit.mul(challenge_x)),
+      challenge_x.toString(10),
+      serialize(proof.A)
+    );*/
+    const f_outprime = new Array(f_out.length);
     for (let i = 0; i < f_out.length; i++) {
-      f_outprime.push(f_out[i].mul(challenge_x.sub(f_out[i])));
+      const exp = challenge_x.sub(f_out[i]).add(curve.n).mod(curve.n);
+      f_outprime[i] = f_out[i].mul(exp).mod(curve.n);
     }
-    console.log("before R1 verify two");
+    console.log(
+      "before R1 verify two",
+      f_outprime.map((item) => item.toString(10))
+    );
     const two = commitBits(this.g, this.h, f_outprime, proof.ZC);
     if (!two.eq(proof.C.mul(challenge_x).add(proof.D))) {
       return false;
@@ -103,8 +114,12 @@ class SigmaVerifier {
 
     const group_elements = new Array(r1proof.A, proof.B, r1proof.C, r1proof.D);
     group_elements.splice(group_elements.length, 0, ...Gk);
-
+    console.log(
+      "group_elements",
+      group_elements.map((item) => serialize(item))
+    );
     const challenge_x = generateChallenge(group_elements);
+    console.log("challenge_x", toBytes(challenge_x));
     const f = new Array();
     if (!r1verifier.verify_final_response(r1proof, challenge_x, f))
       return false;

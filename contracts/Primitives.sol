@@ -23,7 +23,8 @@ library Primitives {
     {
         Utils.G1Point memory res = Utils.zero();
         for (uint256 index = 0; index < hs.length; index++) {
-            res = res.add(hs[index].mul(exps[index]));
+            Utils.G1Point memory tmp = hs[index].mul(exps[index]);
+            res = res.add(tmp);
         }
         return res;
     }
@@ -34,7 +35,10 @@ library Primitives {
         uint256[] memory exps,
         uint256 r
     ) internal pure returns (Utils.G1Point memory) {
-        return g.mul(r).add(multiExp(hs, exps));
+        Utils.G1Point memory tmp1 = multiExp(hs, exps);
+        Utils.G1Point memory tmp2 = g.mul(r);
+        Utils.G1Point memory res = tmp1.add(tmp2);
+        return res;
     }
 
     function generateChallenge(Utils.G1Point[] memory group_elements)
@@ -42,7 +46,9 @@ library Primitives {
         pure
         returns (uint256)
     {
-        return uint256(sha256(abi.encode(group_elements)));
+        bytes memory encoding = abi.encode(group_elements);
+
+        return uint256(sha256(encoding));
     }
 
     function convertToNal(

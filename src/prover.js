@@ -34,12 +34,12 @@ class R1Prover {
         a_out[j * this.n] = a_out[j * this.n].sub(a_out[j * this.n + i]);
       }
     }
-    console.log("after computing a_out");
+    //console.log("after computing a_out");
 
     this.rA = randomExponent();
     const A = commitBits(this.g, this.h, a_out, this.rA);
     proof_out.A = A;
-    console.log("after computing A");
+    //console.log("after computing A");
     const c = new Array(this.n * this.m);
     for (let i = 0; i < c.length; i++) {
       c[i] = a_out[i].mul(new BN(1).sub(this.b[i].mul(new BN(2))));
@@ -48,7 +48,7 @@ class R1Prover {
     this.rC = randomExponent();
     const C = commitBits(this.g, this.h, c, this.rC);
     proof_out.C = C;
-    console.log("after computing C");
+    //console.log("after computing C");
     const d = new Array(this.n * this.m);
     for (let i = 0; i < d.length; i++) {
       d[i] = a_out[i].sqr().neg();
@@ -57,7 +57,7 @@ class R1Prover {
     this.rD = randomExponent();
     const D = commitBits(this.g, this.h, d, this.rD);
     proof_out.D = D;
-    console.log("after computing D");
+    //console.log("after computing D");
     if (!skip_final_response) {
       const group_elements = new Array(A, this.B_commit, C, D);
       const x = generateChallenge(group_elements);
@@ -77,7 +77,7 @@ class R1Prover {
     }
     proof_out.ZA = this.r.mul(challenge_x).add(this.rA);
     proof_out.ZC = this.rC.mul(challenge_x).add(this.rD);
-    console.log("after generateFinalResponse");
+    //console.log("after generateFinalResponse");
   }
 }
 
@@ -104,7 +104,6 @@ class SigmaProver {
     const r1prover = new R1Prover(this.g, this.h, sigma, rB, this.n, this.m);
     proof_out.B = r1prover.B_commit;
     const a = r1prover.prove(proof_out.r1Proof, true);
-    console.log("after r1prover.prove");
     const N = setSize;
     const P_i_k = new Array(N);
     for (let i = 0; i < N; i++) P_i_k[i] = new Array();
@@ -117,7 +116,6 @@ class SigmaProver {
         newFactor(sigma[j * this.n + I[j]], a[j * this.n + I[j]], coefficients);
       }
     }
-    console.log("after P_i_k");
     const Gk = new Array(this.m);
     for (let k = 0; k < this.m; k++) {
       const P_i = new Array(N);
@@ -130,7 +128,6 @@ class SigmaProver {
       Gk[k] = c_k;
     }
     proof_out.Gk = Gk;
-    console.log("after Gk");
     const group_elements = [
       proof_out.r1Proof.A,
       proof_out.B,
@@ -140,9 +137,7 @@ class SigmaProver {
     group_elements.splice(group_elements.length, 0, ...Gk);
 
     const x = generateChallenge(group_elements);
-    console.log("afrer generateChallenge");
     r1prover.generateFinalResponse(a, x, proof_out.r1Proof);
-    console.log("after generateFinalResponse");
     let z = r.mul(x.pow(new BN(this.m)));
     let sum = new BN(0),
       x_k = new BN(1);

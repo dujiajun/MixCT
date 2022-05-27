@@ -8,6 +8,7 @@ const {
   toBytes,
 } = require("./serialize");
 const { SigmaProver } = require("./prover");
+const { SigmaVerifier } = require("./verifier");
 const BN = require("bn.js");
 
 class Client {
@@ -77,13 +78,6 @@ class Client {
     await this.contract.fund(serialize(c), { from: this.account });
     this.value = this.value.add(value);
     this.randomness = this.randomness.add(r);
-    /*console.log(
-      "fund",
-      serialize(c),
-      serialize(this._commit(this.value, this.randomness)),
-      this.value,
-      this.randomness
-    );*/
   }
 
   async burn() {
@@ -130,15 +124,31 @@ class Client {
     const c_red = c_esc.add(c_mask);
 
     const pool = await this.readPool();
-
+    //console.log(pool);
     const trapdoor = this.trapdoors[l];
     const { proof, aux } = this._generateProof(pool, c_esc, c_red, trapdoor);
-    console.log(
+
+    //console.log("proof ", proof, serializeSigmaProof(proof));
+    //console.log("aux ", aux, serializeAux(aux));
+    /*console.log(
       "Redeem",
       serialize(c_red),
       serializeSigmaProof(proof),
       serializeAux(aux)
+    );*/
+    const c_list = pool.map((item) => {
+      const c_i = deserialize(item.cesc);
+      console.log(item);
+      const token = deserialize(item.token);
+      return c_red.add(c_i.add(token).neg());
+    });
+    console.log(
+      "c_list",
+      c_list.map((item) => serialize(item))
     );
+    const verifier = new SigmaVerifier(aux.g, aux.h_gens, aux.n, aux.m);
+    console.log("verify result", verifier.verify(c_list, proof));
+
     const result = await this.contract.redeem(
       serialize(c_red),
       serializeSigmaProof(proof),
@@ -147,6 +157,7 @@ class Client {
         from: this.account,
       }
     );
+
     if (result) {
       this.value = this.value.add(this.vs[l]);
       this.randomness = this.randomness.add(this.rs[l]);

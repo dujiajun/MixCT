@@ -1,8 +1,9 @@
 const crypto = require("crypto");
 const BN = require("bn.js");
 const params = require("./params");
-const { representate } = require("./serialize");
+const { serialize } = require("./serialize");
 const { ec } = params;
+const Web3 = require("web3");
 
 function toBN10(str) {
   return new BN(str, 10);
@@ -26,21 +27,33 @@ function commitBits(g, h, exp, r) {
 }
 
 function randomExponent() {
+  return new BN(10);
+
   const keyPair = ec.genKeyPair();
   return keyPair.getPrivate();
 }
 
 function randomGroupElement() {
+  return params.f;
+
   const keyPair = ec.genKeyPair();
   return keyPair.getPublic();
 }
 
 function generateChallenge(group_elements) {
-  const sha256 = crypto.createHash("sha256");
-  group_elements.forEach((item) => {
-    sha256.update(representate(item));
+  const mapped_params = group_elements.map((elem) => {
+    return serialize(elem);
   });
-  const result_out = new BN(sha256.digest("hex"), "hex").toRed(params.p);
+
+  const web3 = new Web3();
+  const encoded = web3.eth.abi.encodeParameters(
+    ["struct(bytes32,bytes32)[]"],
+    [mapped_params]
+  );
+  const sha256 = crypto.createHash("sha256");
+  sha256.update(Buffer.from(encoded.slice(2), "hex"));
+  const hash_out = sha256.digest("hex");
+  const result_out = new BN(hash_out, "hex").toRed(params.p);
   return result_out;
 }
 
