@@ -1,22 +1,23 @@
 const { zero } = require("../src/params");
 const Client = require("../src/client");
-const { serialize } = require("../src/serialize");
-
 const Tumbler = artifacts.require("Tumbler");
 
 contract("Tumbler", async (accounts) => {
-  let tumbler;
   let clients;
   let alice;
 
-  before(async () => {
-    tumbler = await Tumbler.deployed();
+  it("should deployed", async () => {
+    const tumbler = await Tumbler.deployed();
     clients = accounts.map((account) => new Client(web3, tumbler, account));
     alice = clients[0];
   });
 
   it("should print account", async () => {
     console.log(accounts);
+    const gasPrice = await web3.eth.getGasPrice();
+    console.log("gasPrice: ", gasPrice);
+    var block = await web3.eth.getBlock("latest");
+    console.log("gasLimit: ", block.gasLimit);
   });
 
   it("should print empty balance", async () => {
