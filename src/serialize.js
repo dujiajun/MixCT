@@ -1,10 +1,10 @@
 const { curve, zero } = require("./params");
-
+const BN = require("bn.js");
 const EMPTY =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 function toBytes(x) {
-  return "0x" + x.toString(16, 64);
+  return "0x" + x.toString(16, 32);
 }
 
 function representate(point) {
@@ -28,26 +28,24 @@ function serializeR1Proof(proof) {
   result.push(serialize(proof.C));
   result.push(serialize(proof.D));
   result.push(proof.f.map((item) => toBytes(item)));
-  result.push(toBytes(proof.ZA));
-  result.push(toBytes(proof.ZC));
+  result.push(toBytes(proof.ZA.mod(curve.n)));
+  result.push(toBytes(proof.ZC.mod(curve.n)));
   return result;
 }
 
 function serializeSigmaProof(proof) {
   const result = [];
-  result.push(proof.n);
-  result.push(proof.m);
   result.push(serialize(proof.B));
   result.push(serializeR1Proof(proof.r1Proof));
   result.push(proof.Gk.map((item) => serialize(item)));
-  result.push(toBytes(proof.z));
+  result.push(toBytes(proof.z.mod(curve.n)));
   return result;
 }
 
 function serializeAux(aux) {
   const result = [];
-  result.push(aux.n);
-  result.push(aux.m);
+  result.push(toBytes(new BN(aux.n)));
+  result.push(toBytes(new BN(aux.m)));
   result.push(serialize(aux.g));
   result.push(aux.h_gens.map((item) => serialize(item)));
   return result;

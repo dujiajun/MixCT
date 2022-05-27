@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "./EllipticCurve.sol";
 
 library Utils {
-    uint256 constant PP =
+    uint256 constant FIELD_ORDER =
         0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f;
-    uint256 constant NN =
+    uint256 constant GROUP_ORDER =
         0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
     uint256 constant AA = 0x0;
     uint256 constant BB = 0x7;
@@ -16,8 +16,28 @@ library Utils {
         bytes32 y;
     }
 
+    function add(uint256 x, uint256 y) internal pure returns (uint256) {
+        return addmod(x, y, GROUP_ORDER);
+    }
+
+    function mul(uint256 x, uint256 y) internal pure returns (uint256) {
+        return mulmod(x, y, GROUP_ORDER);
+    }
+
+    function inv(uint256 x) internal pure returns (uint256) {
+        return EllipticCurve.invMod(x, GROUP_ORDER);
+    }
+
+    function mod(uint256 x) internal pure returns (uint256) {
+        return x % GROUP_ORDER;
+    }
+
+    function sub(uint256 x, uint256 y) internal pure returns (uint256) {
+        return x >= y ? x - y : GROUP_ORDER - y + x;
+    }
+
     function neg(uint256 x) internal pure returns (uint256) {
-        return PP - x;
+        return GROUP_ORDER - x;
     }
 
     function g() public pure returns (G1Point memory) {
@@ -45,7 +65,14 @@ library Utils {
     }
 
     function isInfinity(G1Point memory p) internal pure returns (bool) {
-        return EllipticCurve.isOnCurve(uint256(p.x), uint256(p.y), AA, BB, PP);
+        return
+            EllipticCurve.isOnCurve(
+                uint256(p.x),
+                uint256(p.y),
+                AA,
+                BB,
+                FIELD_ORDER
+            );
     }
 
     function add(G1Point memory p1, G1Point memory p2)
@@ -59,7 +86,7 @@ library Utils {
             uint256(p2.x),
             uint256(p2.y),
             AA,
-            PP
+            FIELD_ORDER
         );
         return G1Point(bytes32(x), bytes32(y));
     }
@@ -75,7 +102,7 @@ library Utils {
             uint256(p2.x),
             uint256(p2.y),
             AA,
-            PP
+            FIELD_ORDER
         );
         return G1Point(bytes32(x), bytes32(y));
     }
@@ -90,7 +117,7 @@ library Utils {
             uint256(p.x),
             uint256(p.y),
             AA,
-            PP
+            FIELD_ORDER
         );
         return G1Point(bytes32(x), bytes32(y));
     }
@@ -99,7 +126,7 @@ library Utils {
         (uint256 x, uint256 y) = EllipticCurve.ecInv(
             uint256(p.x),
             uint256(p.y),
-            PP
+            FIELD_ORDER
         );
         return G1Point(bytes32(x), bytes32(y));
     }
