@@ -27,15 +27,11 @@ function commitBits(g, h, exp, r) {
 }
 
 function randomExponent() {
-  return new BN(10);
-
   const keyPair = ec.genKeyPair();
   return keyPair.getPrivate();
 }
 
 function randomGroupElement() {
-  return params.f;
-
   const keyPair = ec.genKeyPair();
   return keyPair.getPublic();
 }

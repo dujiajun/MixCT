@@ -4,7 +4,7 @@ const EMPTY =
   "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 function toBytes(x) {
-  return "0x" + x.toString(16, 32);
+  return "0x" + x.toString(16, 64);
 }
 
 function representate(point) {
