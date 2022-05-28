@@ -8,6 +8,7 @@ const {
   toBytes,
 } = require("./serialize");
 const { SigmaProver } = require("./prover");
+const { SigmaVerifier } = require("./verifier");
 const BN = require("bn.js");
 
 class Client {
@@ -46,9 +47,12 @@ class Client {
     if (value.gt(this.value)) return false;
     const { r, c } = this._commit(value);
     const { trapdoor, token } = this._generateToken();
-    await this.contract.escrow(serialize(c), serialize(token), {
+    const result = await this.contract.escrow(serialize(c), serialize(token), {
       from: this.account,
     });
+    const tx = await this.web3.eth.getTransaction(result.tx);
+    console.log("Escrow tx input size:", (tx.input.length - 2) / 2, "Bytes"); // 2 hex char = 1 byte
+
     this.cs.push(c);
     this.rs.push(r);
     this.vs.push(value);
@@ -118,6 +122,16 @@ class Client {
     return { proof, aux };
   }
 
+  _localVerify(c_red, pool, proof, aux) {
+    const c_list = pool.map((item) => {
+      const c_i = deserialize(item.cesc);
+      const token = deserialize(item.token);
+      return c_red.add(c_i.add(token).neg());
+    });
+    const verifier = new SigmaVerifier(aux.g, aux.h_gens, aux.n, aux.m);
+    return verifier.verify(c_list, proof);
+  }
+
   async redeem(l) {
     // l is the index in our storage, not in contract
     if (l >= this.cs.length) return;
@@ -129,8 +143,14 @@ class Client {
     const pool = await this.readPool();
 
     const trapdoor = this.trapdoors[l];
+    const before_prove = Date.now();
     const { proof, aux } = this._generateProof(pool, c_esc, c_red, trapdoor);
-
+    const after_prove = Date.now();
+    console.log("Proving time: ", after_prove - before_prove, " ms");
+    const before_verify = Date.now();
+    this._localVerify(c_red, pool, proof, aux);
+    const after_verify = Date.now();
+    console.log("Verify time: ", after_verify - before_verify, " ms");
     const result = await this.contract.redeem(
       serialize(c_red),
       serializeSigmaProof(proof),
@@ -140,12 +160,20 @@ class Client {
       }
     );
 
-    const event_result = result.logs[0].args[0];
-    if (event_result) {
-      this.value = this.value.add(this.vs[l]);
-      this.randomness = this.randomness.add(this.rs[l]);
+    const tx = await this.web3.eth.getTransaction(result.tx);
+    console.log("Redeem tx input size:", (tx.input.length - 2) / 2, "Bytes"); // 2 hex char = 1 byte
+
+    for (const item of result.logs) {
+      if (item.event == "RedeemResult") {
+        const event_result = item.args[0];
+        if (event_result) {
+          this.value = this.value.add(this.vs[l]);
+          this.randomness = this.randomness.add(this.rs[l]);
+        }
+        return event_result;
+      }
     }
-    return event_result;
+    return false;
   }
 }
 

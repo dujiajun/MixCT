@@ -104,12 +104,7 @@ class SigmaVerifier {
 
     const group_elements = new Array(r1proof.A, proof.B, r1proof.C, r1proof.D);
     group_elements.splice(group_elements.length, 0, ...Gk);
-    console.log(
-      "group_elements",
-      group_elements.map((item) => serialize(item))
-    );
     const challenge_x = generateChallenge(group_elements);
-    console.log("challenge_x", toBytes(challenge_x));
     const f = new Array();
     if (!r1verifier.verify_final_response(r1proof, challenge_x, f))
       return false;
@@ -139,20 +134,6 @@ class SigmaVerifier {
 
     const left = t1.add(t2);
     const cmp = commit(this.g, new BN(0), this.h[0], proof.z);
-    console.log(
-      "t2\n",
-      serialize(t2),
-      "left\n",
-      serialize(left),
-      "g\n",
-      serialize(this.g),
-      "h0\n",
-      serialize(this.h[0]),
-      "z\n",
-      proof.z.toString(10),
-      "cmp\n",
-      serialize(cmp)
-    );
 
     if (!left.eq(cmp)) {
       return false;
