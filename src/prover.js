@@ -146,7 +146,7 @@ class SigmaProver {
       sum = sum.add(Pk[k].mul(x_k).mod(curve.n)).mod(curve.n);
       x_k = x_k.mul(x).mod(curve.n);
     }
-    z = z.sub(sum).mod(curve.n);
+    z = z.sub(sum).mod(curve.n).add(curve.n).mod(curve.n);
     proof_out.z = z;
     return proof_out;
   }
