@@ -1,8 +1,8 @@
 {
-  "name": "Code",
+  "name": "paper-code",
   "version": "1.0.0",
   "license": "MIT",
-  "type": "common",
+  "type": "commonjs",
   "scripts": {
     "server": "ganache --miner.defaultGasPrice 0 --miner.blockGasLimit 30000000000 --miner.callGasLimit 30000000000"
   },
