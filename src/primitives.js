@@ -2,7 +2,6 @@ const crypto = require("crypto");
 const BN = require("bn.js");
 const params = require("./params");
 const { serialize } = require("./serialize");
-const { ec } = params;
 const Web3 = require("web3");
 
 function toBN10(str) {
@@ -27,13 +26,22 @@ function commitBits(g, h, exp, r) {
 }
 
 function randomExponent() {
-  const keyPair = ec.genKeyPair();
-  return keyPair.getPrivate();
+  return new BN(crypto.randomBytes(32)).mod(params.curve.n);
 }
 
 function randomGroupElement() {
-  const keyPair = ec.genKeyPair();
-  return keyPair.getPublic();
+  const seed_red = randomExponent().toRed(params.p);
+  const p_1_4 = params.curve.p.add(new BN(1)).div(new BN(4));
+  while (true) {
+    const y_squared = seed_red
+      .redPow(new BN(3))
+      .redAdd(new BN(3).toRed(params.p));
+    const y = y_squared.redPow(p_1_4);
+    if (y.redPow(new BN(2)).eq(y_squared)) {
+      return params.curve.point(seed_red.fromRed(), y.fromRed());
+    }
+    seed_red.redIAdd(new BN(1).toRed(params.p));
+  }
 }
 
 function generateChallenge(group_elements) {

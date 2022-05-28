@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./EllipticCurve.sol";
-
 library Utils {
     uint256 constant FIELD_ORDER =
-        0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f;
+        0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47;
     uint256 constant GROUP_ORDER =
-        0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+        0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001;
     uint256 constant AA = 0x0;
-    uint256 constant BB = 0x7;
+    uint256 constant BB = 0x3;
 
     struct G1Point {
         bytes32 x;
@@ -24,8 +22,8 @@ library Utils {
         return mulmod(x, y, GROUP_ORDER);
     }
 
-    function inv(uint256 x) internal pure returns (uint256) {
-        return EllipticCurve.invMod(x, GROUP_ORDER);
+    function inv(uint256 x) internal view returns (uint256) {
+        return exp(x, GROUP_ORDER - 2);
     }
 
     function mod(uint256 x) internal pure returns (uint256) {
@@ -40,95 +38,118 @@ library Utils {
         return GROUP_ORDER - x;
     }
 
+    function exp(uint256 base, uint256 exponent)
+        internal
+        view
+        returns (uint256 output)
+    {
+        uint256 order = GROUP_ORDER;
+        assembly {
+            let m := mload(0x40)
+            mstore(m, 0x20)
+            mstore(add(m, 0x20), 0x20)
+            mstore(add(m, 0x40), 0x20)
+            mstore(add(m, 0x60), base)
+            mstore(add(m, 0x80), exponent)
+            mstore(add(m, 0xa0), order)
+            if iszero(staticcall(gas(), 0x05, m, 0xc0, m, 0x20)) {
+                // staticcall or call?
+                revert(0, 0)
+            }
+            output := mload(m)
+        }
+    }
+
+    function fieldExp(uint256 base, uint256 exponent)
+        internal
+        view
+        returns (uint256 output)
+    {
+        // warning: mod p, not q
+        uint256 order = FIELD_ORDER;
+        assembly {
+            let m := mload(0x40)
+            mstore(m, 0x20)
+            mstore(add(m, 0x20), 0x20)
+            mstore(add(m, 0x40), 0x20)
+            mstore(add(m, 0x60), base)
+            mstore(add(m, 0x80), exponent)
+            mstore(add(m, 0xa0), order)
+            if iszero(staticcall(gas(), 0x05, m, 0xc0, m, 0x20)) {
+                // staticcall or call?
+                revert(0, 0)
+            }
+            output := mload(m)
+        }
+    }
+
     function g() public pure returns (G1Point memory) {
         return
             G1Point(
-                0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
-                0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+                0x077da99d806abd13c9f15ece5398525119d11e11e9836b2ee7d23f6159ad87d4,
+                0x01485efa927f2ad41bff567eec88f32fb0a0f706588b4e41a8d587d008b7f875
             );
     }
 
     function h() public pure returns (G1Point memory) {
         return
             G1Point(
-                0xd67dedde7f8861e5a99c0e30e06594997e85da6604ceffd429c69bf9d1d5b4d7,
-                0x77f0f57c3757fc327265bf588cf1ddef2ca35b1445e9374e44ca710301bd9b61
+                0x05dd80ae2d36802bbf1fabdcad13003835d8754db0126d2a3dfc07da0b42517c,
+                0x2823e193977627175e515e35ce3a228a5f39b6f078d3b5bcbac0e6f1f40bba7e
             );
     }
 
     function f() public pure returns (G1Point memory) {
         return
             G1Point(
-                0xc4abbb41fb87d293ae90fd755c1e62506b7c80d2fe84efa36970383e17ca274a,
-                0xd730074791dbacb3bc866d4600b62d1da3bd1aacc2da289f20424036f10c1c06
-            );
-    }
-
-    function isInfinity(G1Point memory p) internal pure returns (bool) {
-        return
-            EllipticCurve.isOnCurve(
-                uint256(p.x),
-                uint256(p.y),
-                AA,
-                BB,
-                FIELD_ORDER
+                0x2270a3f55fa19414d05f9403ce79df11ed35b82ad603881ad4caa5ffc44ec8ad,
+                0x02584c75d9416dff4470cb1e49f8f7e0dbf693b023a7e3f75f26d1ebce502d23
             );
     }
 
     function add(G1Point memory p1, G1Point memory p2)
         internal
-        pure
+        view
         returns (G1Point memory r)
     {
-        (uint256 x, uint256 y) = EllipticCurve.ecAdd(
-            uint256(p1.x),
-            uint256(p1.y),
-            uint256(p2.x),
-            uint256(p2.y),
-            AA,
-            FIELD_ORDER
-        );
-        return G1Point(bytes32(x), bytes32(y));
+        assembly {
+            let m := mload(0x40)
+            mstore(m, mload(p1))
+            mstore(add(m, 0x20), mload(add(p1, 0x20)))
+            mstore(add(m, 0x40), mload(p2))
+            mstore(add(m, 0x60), mload(add(p2, 0x20)))
+            if iszero(staticcall(gas(), 0x06, m, 0x80, r, 0x40)) {
+                revert(0, 0)
+            }
+        }
     }
 
     function sub(G1Point memory p1, G1Point memory p2)
         internal
-        pure
+        view
         returns (G1Point memory r)
     {
-        (uint256 x, uint256 y) = EllipticCurve.ecSub(
-            uint256(p1.x),
-            uint256(p1.y),
-            uint256(p2.x),
-            uint256(p2.y),
-            AA,
-            FIELD_ORDER
-        );
-        return G1Point(bytes32(x), bytes32(y));
+        return add(p1, neg(p2));
     }
 
     function mul(G1Point memory p, uint256 s)
         internal
-        pure
+        view
         returns (G1Point memory r)
     {
-        (uint256 x, uint256 y) = EllipticCurve.ecMul(
-            s,
-            uint256(p.x),
-            uint256(p.y),
-            AA,
-            FIELD_ORDER
-        );
-        return G1Point(bytes32(x), bytes32(y));
+        assembly {
+            let m := mload(0x40)
+            mstore(m, mload(p))
+            mstore(add(m, 0x20), mload(add(p, 0x20)))
+            mstore(add(m, 0x40), s)
+            if iszero(staticcall(gas(), 0x07, m, 0x60, r, 0x40)) {
+                revert(0, 0)
+            }
+        }
     }
 
     function neg(G1Point memory p) internal pure returns (G1Point memory) {
-        (uint256 x, uint256 y) = EllipticCurve.ecInv(
-            uint256(p.x),
-            uint256(p.y),
-            FIELD_ORDER
-        );
-        return G1Point(bytes32(x), bytes32(y));
+        return G1Point(p.x, bytes32(FIELD_ORDER - uint256(p.y)));
     }
 
     function eq(G1Point memory p1, G1Point memory p2)

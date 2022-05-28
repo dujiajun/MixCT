@@ -42,7 +42,7 @@ library Verifier {
         R1Proof memory proof,
         R1Auxiliaries memory aux,
         bool skip_final
-    ) internal pure returns (bool) {
+    ) internal view returns (bool) {
         if (!skip_final) {
             Utils.G1Point[] memory group_elements = new Utils.G1Point[](4);
             group_elements[0] = proof.A;
@@ -61,7 +61,7 @@ library Verifier {
         R1Auxiliaries memory aux,
         uint256 challenge_x,
         uint256[] memory f_out
-    ) internal pure returns (bool) {
+    ) internal view returns (bool) {
         for (uint256 j = 0; j < proof.f.length; j++) {
             if (proof.f[j] == challenge_x) return false;
         }
@@ -110,7 +110,7 @@ library Verifier {
         Utils.G1Point[] memory commits,
         SigmaProof memory proof,
         SigmaAuxiliaries memory aux
-    ) internal pure returns (bool) {
+    ) internal view returns (bool) {
         uint256 challenge_x;
         uint256 N = commits.length;
         uint256[] memory f = new uint256[](N);

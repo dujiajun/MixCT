@@ -12,7 +12,7 @@ library Primitives {
         uint256 v,
         Utils.G1Point memory h,
         uint256 r
-    ) internal pure returns (Utils.G1Point memory) {
+    ) internal view returns (Utils.G1Point memory) {
         if (v == 0) return h.mul(r);
         if (r == 0) return g.mul(v);
         return g.mul(v).add(h.mul(r));
@@ -20,7 +20,7 @@ library Primitives {
 
     function multiExp(Utils.G1Point[] memory hs, uint256[] memory exps)
         internal
-        pure
+        view
         returns (Utils.G1Point memory)
     {
         Utils.G1Point memory res = Utils.zero();
@@ -36,7 +36,7 @@ library Primitives {
         Utils.G1Point[] memory hs,
         uint256[] memory exps,
         uint256 r
-    ) internal pure returns (Utils.G1Point memory) {
+    ) internal view returns (Utils.G1Point memory) {
         Utils.G1Point memory tmp1 = multiExp(hs, exps);
         Utils.G1Point memory tmp2 = g.mul(r);
         Utils.G1Point memory res = tmp1.add(tmp2);

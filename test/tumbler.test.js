@@ -7,12 +7,15 @@ const {
 const BN = require("bn.js");
 const { g, h, f } = require("../src/params");
 const { SigmaProver } = require("../src/prover");
+const { serialize } = require("../src/serialize");
 
 it("test tumbler", () => {
   //params
   const N = 4;
   const n = 2;
   const m = 2;
+
+  console.log(serialize(g), serialize(h), serialize(f));
 
   //prepare escrow data
   const vs = new Array(N);
