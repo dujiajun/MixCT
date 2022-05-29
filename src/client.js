@@ -95,7 +95,33 @@ class Client {
     this.randomness = new BN(0);
   }
 
-  _generateProof(pool, c_esc, c_red, trapdoor) {
+  _generateProofFormat(pool, c_esc, c_red, trapdoor) {
+    let index = 0; // index in pool;
+    const c_list = new Array(pool.length); // used to generate proof
+    for (let i = 0; i < pool.length; i++) {
+      const c_i = deserialize(pool[i].cesc);
+      if (c_i.eq(c_esc)) index = i;
+      c_list[i] = c_red.add(c_i.neg());
+    }
+
+    const N = pool.length;
+    const n = 2; // fixed argument, can be adjust according to BCC+15 paper
+    const m = Math.log2(N); // require n**m == N
+
+    const h_gens = new Array(n * m);
+    h_gens[0] = h;
+    for (let i = 1; i < h_gens.length; i++) {
+      h_gens[i] = randomGroupElement();
+    }
+
+    // g is the same with g in commit, h_gens[0] should be the h/f in paper
+    const aux = { n, m, g, h_gens };
+    const prover = new SigmaProver(g, h_gens, n, m);
+    const proof = prover.prove(c_list, index, trapdoor);
+    return { proof, aux };
+  }
+
+  _generateProofRedeem(pool, c_esc, c_red, trapdoor) {
     let index = 0; // index in pool;
     const c_list = new Array(pool.length); // used to generate proof
     for (let i = 0; i < pool.length; i++) {
@@ -144,17 +170,31 @@ class Client {
 
     const trapdoor = this.trapdoors[l];
     const before_prove = Date.now();
-    const { proof, aux } = this._generateProof(pool, c_esc, c_red, trapdoor);
+    const { proof: proof_format, aux: aux_format } = this._generateProofFormat(
+      pool,
+      c_esc,
+      c_red,
+      trapdoor
+    );
+    const { proof: proof_redeem, aux: aux_redeem } = this._generateProofRedeem(
+      pool,
+      c_esc,
+      c_red,
+      trapdoor
+    );
     const after_prove = Date.now();
     console.log("Proving time: ", after_prove - before_prove, " ms");
     const before_verify = Date.now();
-    this._localVerify(c_red, pool, proof, aux);
+    this._localVerify(c_red, pool, proof_format, aux_format);
+    this._localVerify(c_red, pool, proof_redeem, aux_redeem);
     const after_verify = Date.now();
     console.log("Verify time: ", after_verify - before_verify, " ms");
     const result = await this.contract.redeem(
       serialize(c_red),
-      serializeSigmaProof(proof),
-      serializeAux(aux),
+      serializeSigmaProof(proof_format),
+      serializeAux(aux_format),
+      serializeSigmaProof(proof_redeem),
+      serializeAux(aux_redeem),
       {
         from: this.account,
       }

@@ -40,23 +40,34 @@ contract Tumbler {
 
     function redeem(
         Utils.G1Point memory cred,
-        Verifier.SigmaProof memory proof,
-        Verifier.SigmaAuxiliaries memory aux
+        Verifier.SigmaProof memory proof_format,
+        Verifier.SigmaAuxiliaries memory aux_format,
+        Verifier.SigmaProof memory proof_redeem,
+        Verifier.SigmaAuxiliaries memory aux_redeem
     ) public {
         Utils.G1Point[] memory clist = new Utils.G1Point[](esc_pool.length);
+
         for (uint256 i = 0; i < esc_pool.length; i++) {
-            clist[i] = cred.sub(esc_pool[i].cesc.add(esc_pool[i].token));
+            clist[i] = cred.sub(esc_pool[i].cesc);
+        }
+        if (!Verifier.verifySigmaProof(clist, proof_format, aux_format)) {
+            emit RedeemResult(false);
+            return;
         }
 
-        if (Verifier.verifySigmaProof(clist, proof, aux)) {
-            RedeemStatement memory statement;
-            statement.cred = cred;
-            red_pool.push(statement);
-            acc[msg.sender] = acc[msg.sender].add(cred);
-            emit RedeemResult(true);
-        } else {
-            emit RedeemResult(false);
+        for (uint256 i = 0; i < esc_pool.length; i++) {
+            clist[i] = clist[i].sub(esc_pool[i].token);
         }
+
+        if (!Verifier.verifySigmaProof(clist, proof_redeem, aux_redeem)) {
+            emit RedeemResult(false);
+            return;
+        }
+        RedeemStatement memory statement;
+        statement.cred = cred;
+        red_pool.push(statement);
+        acc[msg.sender] = acc[msg.sender].add(cred);
+        emit RedeemResult(true);
     }
 
     function fund(Utils.G1Point memory c_init) public {
